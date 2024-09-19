@@ -1,5 +1,6 @@
 package com.example.rickandmortylab.locations
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -8,7 +9,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.rickandmortylab.data.LocationDb
@@ -36,17 +36,12 @@ fun LocationsScreen(navController: NavController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp)
+                        .clickable {
+                            navController.navigate("locationDetails/${location.id}")
+                        }
                 ) {
-                    Text(
-                        text = location.name,
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                    Text(
-                        text = location.type,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    Text(text = location.name, style = MaterialTheme.typography.titleMedium)
+                    Text(text = location.type, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
