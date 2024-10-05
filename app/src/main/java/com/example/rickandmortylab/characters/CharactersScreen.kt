@@ -7,24 +7,31 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
+import com.example.rickandmortylab.ErrorScreen
+import com.example.rickandmortylab.LoadingScreen
 import com.example.rickandmortylab.model.Character
-import com.example.rickandmortylab.data.CharacterDb
-import androidx.compose.material.icons.filled.Error
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CharacterListScreen(navController: NavController) {
+fun CharacterListScreen(
+    navController: NavController,
+    viewModel: CharacterListViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -36,23 +43,40 @@ fun CharacterListScreen(navController: NavController) {
             )
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            val characters = CharacterDb().getAllCharacters()
-            // Usar 'items' para iterar la lista de personajes
-            items(characters) { character ->
-                CharacterRow(character = character, onClick = {
-                    navController.navigate("character_details/${character.id}")
-                })
+        when {
+            uiState.isLoading -> {
+                LoadingScreen(onClick = { viewModel.setErrorState() })
+            }
+            uiState.hasError -> {
+                ErrorScreen(onRetry = { viewModel.retryLoad() })
+            }
+            uiState.data.isNotEmpty() -> {
+                CharacterList(navController = navController, characters = uiState.data, paddingValues = paddingValues)
             }
         }
     }
 }
+
+@Composable
+fun CharacterList(
+    navController: NavController,
+    characters: List<Character>,
+    paddingValues: PaddingValues
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+    ) {
+        items(characters) { character ->
+            CharacterRow(character = character, onClick = {
+                navController.navigate("character_details/${character.id}")
+            })
+        }
+    }
+}
+
+
 
 @Composable
 fun CharacterRow(character: Character, onClick: () -> Unit) {
@@ -73,7 +97,6 @@ fun CharacterRow(character: Character, onClick: () -> Unit) {
                 modifier = Modifier.size(50.dp)
             )
         } else {
-            // Mostrar la imagen si no hay error
             Image(
                 painter = painter,
                 contentDescription = character.name,
