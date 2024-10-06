@@ -22,6 +22,7 @@ class CharacterListViewModel : ViewModel() {
             _uiState.value = CharacterListState(isLoading = true)
             try {
                 delay(4000)
+                if (_uiState.value.hasError) return@launch
                 val characters = CharacterDb().getAllCharacters()
                 _uiState.value = CharacterListState(isLoading = false, data = characters)
             } catch (e: Exception) {

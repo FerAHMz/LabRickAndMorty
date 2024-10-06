@@ -17,6 +17,7 @@ class CharacterDetailViewModel : ViewModel() {
             _uiState.value = CharacterDetailState(isLoading = true)
             try {
                 delay(2000)
+                if (_uiState.value.hasError) return@launch
                 val character = CharacterDb().getCharacterById(characterId)
                 _uiState.value = CharacterDetailState(isLoading = false, character = character)
             } catch (e: Exception) {

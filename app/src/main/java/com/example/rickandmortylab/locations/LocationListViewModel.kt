@@ -21,6 +21,7 @@ class LocationListViewModel : ViewModel() {
             _uiState.value = LocationListState(isLoading = true)
             try {
                 delay(4000)
+                if (_uiState.value.hasError) return@launch
                 val locations = LocationDb().getAllLocations()
                 _uiState.value = LocationListState(isLoading = false, data = locations)
             } catch (e: Exception) {
