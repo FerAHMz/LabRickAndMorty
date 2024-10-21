@@ -6,44 +6,94 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
+import com.example.rickandmortylab.ErrorScreen
+import com.example.rickandmortylab.LoadingScreen
+import com.example.rickandmortylab.data.CharacterDao
+import com.example.rickandmortylab.main.MainViewModel
 import com.example.rickandmortylab.model.Character
-import com.example.rickandmortylab.data.CharacterDb
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CharacterListScreen(navController: NavController) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Characters") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+fun CharacterListScreen(
+    navController: NavController,
+    mainViewModel: MainViewModel = viewModel(),
+    characterDao: CharacterDao
+) {
+    val viewModel: CharacterListViewModel = viewModel()
+
+    val isSyncing by mainViewModel.isSyncing
+    val uiState by viewModel.uiState.collectAsState()
+
+    if (isSyncing) {
+        LoadingScreen(onClick = { /* No action needed */ })
+    } else {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Characters") },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 )
-            )
+            }
+        ) { paddingValues ->
+            when {
+                uiState.isLoading -> {
+                    LoadingScreen(onClick = { viewModel.setErrorState() })
+                }
+                uiState.hasError -> {
+                    ErrorScreen(onRetry = { viewModel.retryLoad() })
+                }
+                uiState.data.isNotEmpty() -> {
+                    CharacterList(
+                        navController = navController,
+                        characters = uiState.data,
+                        paddingValues = paddingValues
+                    )
+                }
+                else -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "No characters available")
+                    }
+                }
+            }
         }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            val characters = CharacterDb().getAllCharacters()
-            // Usar 'items' para iterar la lista de personajes
-            items(characters) { character ->
-                CharacterRow(character = character, onClick = {
-                    navController.navigate("character_details/${character.id}")
-                })
+    }
+}
+
+@Composable
+fun CharacterList(
+    navController: NavController,
+    characters: List<Character>,
+    paddingValues: PaddingValues
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+    ) {
+        items(characters) { character ->
+            CharacterRow(character = character) {
+                navController.navigate("character_details/${character.id}")
             }
         }
     }
@@ -58,18 +108,33 @@ fun CharacterRow(character: Character, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        val painter = rememberAsyncImagePainter(character.image)
-        Image(
-            painter = painter,
-            contentDescription = character.name,
-            modifier = Modifier
-                .size(50.dp)
-                .clip(CircleShape)
-        )
+        val painter = rememberAsyncImagePainter(model = character.image)
+
+        if (painter.state is AsyncImagePainter.State.Error) {
+            Image(
+                imageVector = Icons.Filled.Error,
+                contentDescription = "Error loading image",
+                modifier = Modifier.size(50.dp)
+            )
+        } else {
+            AsyncImage(
+                model = character.image,
+                contentDescription = character.name,
+                modifier = Modifier
+                    .size(50.dp)
+                    .clip(CircleShape)
+            )
+        }
+
         Spacer(modifier = Modifier.width(8.dp))
+
         Column {
             Text(text = character.name, style = MaterialTheme.typography.titleMedium)
-            Text(text = "${character.species} - ${character.status}", style = MaterialTheme.typography.bodySmall)
+            Text(
+                text = "${character.species} - ${character.status}",
+                style = MaterialTheme.typography.bodySmall
+            )
         }
     }
 }
+
