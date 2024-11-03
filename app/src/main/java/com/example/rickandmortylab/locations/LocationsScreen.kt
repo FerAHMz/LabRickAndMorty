@@ -16,12 +16,16 @@ import androidx.navigation.NavController
 import com.example.rickandmortylab.model.Location
 import com.example.rickandmortylab.ErrorScreen
 import com.example.rickandmortylab.LoadingScreen
+import com.example.rickandmortylab.data.LocationDao
+import com.example.rickandmortylab.RickAndMortyApiClient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationsScreen(
     navController: NavController,
-    viewModel: LocationListViewModel = viewModel()
+    apiClient: RickAndMortyApiClient,
+    locationDao: LocationDao,
+    viewModel: LocationListViewModel = viewModel(factory = LocationListViewModelFactory(apiClient, locationDao))
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -50,6 +54,16 @@ fun LocationsScreen(
                     paddingValues = paddingValues
                 )
             }
+            else -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "No locations available")
+                }
+            }
         }
     }
 }
@@ -75,7 +89,7 @@ fun LocationList(
                     }
             ) {
                 Text(text = location.name, style = MaterialTheme.typography.titleMedium)
-                Text(text = location.type, style = MaterialTheme.typography.bodyMedium)
+                Text(text = location.type ?: "Unknown", style = MaterialTheme.typography.bodyMedium)
             }
         }
     }

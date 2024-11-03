@@ -34,46 +34,47 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         viewModelScope.launch {
-            val preferences = getApplication<Application>().dataStore.data.first()
-            val username = preferences[LoginPreferencesKeys.USERNAME_KEY]
-            _isLoggedIn.value = username != null
+            getApplication<Application>().dataStore.data.collect { preferences ->
+                val username = preferences[LoginPreferencesKeys.USERNAME_KEY]
+                _isLoggedIn.value = username != null
+            }
         }
     }
 
     fun syncData() {
         viewModelScope.launch {
             isSyncing.value = true
-            delay(2000)
+            try {
+                delay(2000)
+                val characters = characterDb.getAllCharacters()
+                val locations = locationDb.getAllLocations()
 
-            val characters = characterDb.getAllCharacters()
-            val locations = locationDb.getAllLocations()
+                characterDao.insertCharacters(characters.map {
+                    CharacterEntity(
+                        id = it.id,
+                        name = it.name,
+                        status = it.status,
+                        species = it.species,
+                        gender = it.gender,
+                        image = it.image
+                    )
+                })
 
-            val characterEntities = characters.map { character ->
-                CharacterEntity(
-                    id = character.id,
-                    name = character.name,
-                    status = character.status,
-                    species = character.species,
-                    gender = character.gender,
-                    image = character.image
-                )
+                locationDao.insertLocations(locations.map {
+                    LocationEntity(
+                        id = it.id,
+                        name = it.name,
+                        type = it.type,
+                        dimension = it.dimension
+                    )
+                })
+            } catch (e: Exception) {
+            } finally {
+                isSyncing.value = false
             }
-
-            val locationEntities = locations.map { location ->
-                LocationEntity(
-                    id = location.id,
-                    name = location.name,
-                    type = location.type,
-                    dimension = location.dimension
-                )
-            }
-
-            characterDao.insertCharacters(characterEntities)
-            locationDao.insertLocations(locationEntities)
-
-            isSyncing.value = false
         }
     }
+
 
     fun logout() {
         viewModelScope.launch {

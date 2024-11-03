@@ -29,6 +29,8 @@ import com.example.rickandmortylab.main.MainViewModelFactory
 import com.example.rickandmortylab.profile.addProfile
 import com.example.rickandmortylab.data.AppDatabase
 import com.example.rickandmortylab.data.CharacterDao
+import com.example.rickandmortylab.data.LocationDao
+import com.example.rickandmortylab.RickAndMortyApiClient
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,6 +57,10 @@ fun MyApp(mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactor
 
     val context = LocalContext.current.applicationContext
     val characterDao = remember { AppDatabase.getDatabase(context).characterDao() }
+    val locationDao = remember { AppDatabase.getDatabase(context).locationDao() }
+
+    // Instancia de RickAndMortyApiClient
+    val apiClient = remember { RickAndMortyApiClient(HttpClientFactory.create()) }
 
     LaunchedEffect(isLoggedIn) {
         if (isLoggedIn && navController.currentDestination?.route != "characters") {
@@ -78,18 +84,19 @@ fun MyApp(mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactor
         MainNavHost(
             navController = navController,
             characterDao = characterDao,
+            locationDao = locationDao,
+            apiClient = apiClient,
             modifier = Modifier.padding(paddingValues)
         )
     }
 }
 
-
-
-
 @Composable
 fun MainNavHost(
     navController: NavHostController,
     characterDao: CharacterDao,
+    locationDao: LocationDao,
+    apiClient: RickAndMortyApiClient,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -98,11 +105,12 @@ fun MainNavHost(
         modifier = modifier
     ) {
         addLogin(navController)
-        addLocations(navController)
+        addLocations(navController, locationDao, apiClient)
         addProfile(navController)
-        addCharactersGraph(navController, characterDao)
+        addCharactersGraph(navController, characterDao, apiClient)
     }
 }
+
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {

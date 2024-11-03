@@ -24,15 +24,19 @@ import com.example.rickandmortylab.LoadingScreen
 import com.example.rickandmortylab.data.CharacterDao
 import com.example.rickandmortylab.main.MainViewModel
 import com.example.rickandmortylab.model.Character
+import com.example.rickandmortylab.RickAndMortyApiClient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharacterListScreen(
     navController: NavController,
     mainViewModel: MainViewModel = viewModel(),
-    characterDao: CharacterDao
+    characterDao: CharacterDao,
+    apiClient: RickAndMortyApiClient
 ) {
-    val viewModel: CharacterListViewModel = viewModel()
+    val viewModel: CharacterListViewModel = viewModel(
+        factory = CharacterListViewModelFactory(apiClient, characterDao)
+    )
 
     val isSyncing by mainViewModel.isSyncing
     val uiState by viewModel.uiState.collectAsState()
@@ -137,4 +141,3 @@ fun CharacterRow(character: Character, onClick: () -> Unit) {
         }
     }
 }
-

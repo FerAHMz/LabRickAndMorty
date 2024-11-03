@@ -63,12 +63,18 @@ fun CharacterDetailScreen(
                 CharacterDetailContent(character = uiState.character!!, paddingValues = paddingValues)
             }
             else -> {
-                // Si character es null después de la carga
-                Text(
-                    text = "Character not found",
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Character not found",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
             }
         }
     }

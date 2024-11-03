@@ -1,6 +1,5 @@
 package com.example.rickandmortylab.locations
 
-
 import com.example.rickandmortylab.model.Location
 
 data class LocationListState(

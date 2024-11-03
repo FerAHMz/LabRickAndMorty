@@ -8,17 +8,23 @@ import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.example.rickandmortylab.characters.CharacterListScreen
 import com.example.rickandmortylab.data.CharacterDao
+import com.example.rickandmortylab.RickAndMortyApiClient
 
 fun NavGraphBuilder.addCharactersGraph(
     navController: NavHostController,
-    characterDao: CharacterDao
+    characterDao: CharacterDao,
+    apiClient: RickAndMortyApiClient
 ) {
     navigation(
         startDestination = "character_list",
         route = "characters"
     ) {
         composable("character_list") {
-            CharacterListScreen(navController = navController, characterDao = characterDao)
+            CharacterListScreen(
+                navController = navController,
+                characterDao = characterDao,
+                apiClient = apiClient
+            )
         }
 
         composable(

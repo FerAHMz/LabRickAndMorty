@@ -76,13 +76,12 @@ fun LocationDetailContent(location: Location, paddingValues: PaddingValues) {
         ) {
             DetailRow(label = "ID:", value = location.id.toString())
             Spacer(modifier = Modifier.height(8.dp))
-            DetailRow(label = "Type:", value = location.type)
+            DetailRow(label = "Type:", value = location.type ?: "Unknown")
             Spacer(modifier = Modifier.height(8.dp))
-            DetailRow(label = "Dimension:", value = location.dimension)
+            DetailRow(label = "Dimension:", value = location.dimension ?: "Unknown")
         }
     }
 }
-
 
 @Composable
 fun DetailRow(label: String, value: String) {

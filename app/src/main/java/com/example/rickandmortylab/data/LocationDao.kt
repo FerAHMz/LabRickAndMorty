@@ -8,12 +8,11 @@ import androidx.room.Query
 @Dao
 interface LocationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertLocations(locations: List<LocationEntity>)
+    suspend fun insertLocations(locations: List<LocationEntity>)
 
     @Query("SELECT * FROM locations")
-    fun getAllLocations(): List<LocationEntity>
+    suspend fun getAllLocations(): List<LocationEntity>
 
     @Query("SELECT * FROM locations WHERE id = :id")
-    fun getLocationById(id: Int): LocationEntity
+    suspend fun getLocationById(id: Int): LocationEntity?
 }
-

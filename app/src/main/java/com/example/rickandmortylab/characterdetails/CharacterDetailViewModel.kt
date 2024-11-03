@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.rickandmortylab.data.CharacterDao
 import com.example.rickandmortylab.model.Character
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -22,21 +21,22 @@ class CharacterDetailViewModel(private val characterDao: CharacterDao) : ViewMod
 
                 if (characterEntity == null) {
                     _uiState.value = CharacterDetailState(hasError = true)
-                    return@launch
+                } else {
+                    val character = Character(
+                        id = characterEntity.id,
+                        name = characterEntity.name,
+                        status = characterEntity.status,
+                        species = characterEntity.species,
+                        gender = characterEntity.gender,
+                        image = characterEntity.image
+                    )
+                    _uiState.value = CharacterDetailState(character = character)
                 }
-
-                val character = Character(
-                    id = characterEntity.id,
-                    name = characterEntity.name,
-                    status = characterEntity.status,
-                    species = characterEntity.species,
-                    gender = characterEntity.gender,
-                    image = characterEntity.image
-                )
-
-                _uiState.value = CharacterDetailState(character = character)
             } catch (e: Exception) {
+                e.printStackTrace()
                 _uiState.value = CharacterDetailState(hasError = true)
+            } finally {
+                _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }
     }
@@ -46,6 +46,6 @@ class CharacterDetailViewModel(private val characterDao: CharacterDao) : ViewMod
     }
 
     fun setErrorState() {
-        _uiState.value = _uiState.value.copy(hasError = true)
+        _uiState.value = _uiState.value.copy(hasError = true, isLoading = false)
     }
 }

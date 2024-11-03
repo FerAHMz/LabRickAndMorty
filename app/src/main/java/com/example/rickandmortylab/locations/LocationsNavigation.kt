@@ -1,16 +1,24 @@
 package com.example.rickandmortylab.locations
 
-import androidx.compose.runtime.Composable
-import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.rickandmortylab.data.LocationDao
+import com.example.rickandmortylab.RickAndMortyApiClient
 
-fun NavGraphBuilder.addLocations(navController: NavHostController) {
+fun NavGraphBuilder.addLocations(
+    navController: NavHostController,
+    locationDao: LocationDao,
+    apiClient: RickAndMortyApiClient
+) {
     composable("locations") {
-        LocationsScreen(navController = navController)
+        LocationsScreen(
+            navController = navController,
+            locationDao = locationDao,
+            apiClient = apiClient
+        )
     }
 
     composable(
@@ -19,8 +27,10 @@ fun NavGraphBuilder.addLocations(navController: NavHostController) {
     ) { backStackEntry ->
         val locationId = backStackEntry.arguments?.getInt("locationId")
         if (locationId != null) {
-            LocationDetailScreen(navController = navController, locationId = locationId)
+            LocationDetailScreen(
+                navController = navController,
+                locationId = locationId
+            )
         }
     }
 }
-

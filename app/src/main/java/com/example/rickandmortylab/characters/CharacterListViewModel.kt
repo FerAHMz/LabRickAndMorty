@@ -2,16 +2,21 @@ package com.example.rickandmortylab.characters
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.rickandmortylab.data.CharacterDb // Asegúrate de importar tu archivo CharacterDb
+import com.example.rickandmortylab.data.CharacterDao
+import com.example.rickandmortylab.data.CharacterEntity
 import com.example.rickandmortylab.model.Character
+import com.example.rickandmortylab.RickAndMortyApiClient
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class CharacterListViewModel : ViewModel() {
-
-    private val characterDb = CharacterDb()
+class CharacterListViewModel(
+    private val apiClient: RickAndMortyApiClient,
+    private val characterDao: CharacterDao
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CharacterListState())
     val uiState: StateFlow<CharacterListState> = _uiState
@@ -24,12 +29,41 @@ class CharacterListViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
-                val characters = characterDb.getAllCharacters()
+                val characters = apiClient.getCharacters()
+                val characterEntities = characters.map {
+                    CharacterEntity(it.id, it.name, it.status, it.species, it.gender, it.image)
+                }
 
-                _uiState.update { it.copy(isLoading = false, data = characters) }
+                withContext(Dispatchers.IO) {
+                    characterDao.insertCharacters(characterEntities)
+                }
+
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        data = characterEntities.map { entity ->
+                            Character(entity.id, entity.name, entity.status, entity.species, entity.gender, entity.image)
+                        }
+                    )
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
-                _uiState.update { it.copy(isLoading = false, hasError = true) }
+
+                val localCharacters = withContext(Dispatchers.IO) {
+                    characterDao.getAllCharacters()
+                }
+                if (localCharacters.isNotEmpty()) {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            data = localCharacters.map { entity ->
+                                Character(entity.id, entity.name, entity.status, entity.species, entity.gender, entity.image)
+                            }
+                        )
+                    }
+                } else {
+                    _uiState.update { it.copy(isLoading = false, hasError = true) }
+                }
             }
         }
     }
